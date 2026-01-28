@@ -82,6 +82,42 @@ exports.addToCart = async (req, res) => {
   }
 };
 
+exports.updateCartItem = async (req, res) => {
+  try {
+    const { quantity } = req.body;
+
+    // Add these debug logs
+    console.log('Cart ID:', req.params.id);
+    console.log('User ID:', req.userId);
+    console.log('Quantity:', quantity);
+
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ success: false, message: 'Valid quantity required' });
+    }
+
+    // Check if user is authenticated
+    if (!req.userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    const [result] = await db.query(
+      'UPDATE cart SET quantity = ? WHERE cart_id = ? AND user_id = ?',
+      [quantity, req.params.id, req.userId]
+    );
+
+    console.log('Affected rows:', result.affectedRows); // See if anything was updated
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Cart item not found' });
+    }
+
+    res.json({ success: true, message: 'Cart updated successfully' });
+  } catch (error) {
+    console.error('Update cart error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 // Update cart item quantity
 exports.updateCartItem = async (req, res) => {
   try {
